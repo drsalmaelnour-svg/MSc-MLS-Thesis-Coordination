@@ -1,239 +1,263 @@
-# MSc MLS Thesis Coordination Dashboard
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MSc MLS Thesis Coordination Dashboard</title>
+
+<style>
+body{font-family:Arial,Helvetica,sans-serif;margin:0;background:#f4f6fb;color:#1e293b}
+header{background:#0f2f4a;color:white;padding:20px}
+header h1{margin:0;font-size:22px}
+header p{margin:4px 0 0;font-size:14px;opacity:.9}
+.container{padding:30px;max-width:1200px;margin:auto}
+.card{background:white;border-radius:10px;padding:20px;margin-bottom:25px;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+button{padding:10px 14px;border:none;background:#0f2f4a;color:white;border-radius:6px;cursor:pointer}
+button:hover{opacity:.9}
+table{width:100%;border-collapse:collapse;margin-top:15px}
+th,td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:14px}
+th{background:#f1f5f9}
+.link{color:#2563eb;text-decoration:none}
+.portal{max-width:600px;margin:auto;padding:40px}
+input,textarea,select{width:100%;padding:10px;margin-top:8px;margin-bottom:14px;border:1px solid #cbd5e1;border-radius:6px}
+textarea{height:120px}
+.notice{background:#f1f5f9;padding:12px;border-radius:6px;margin-bottom:20px}
+</style>
+</head>
 
-**MSc Medical Laboratory Science Program**  
-**College of Health Sciences — Gulf Medical University**
+<body>
 
-A web-based coordination dashboard designed to support the management of MSc Medical Laboratory Science thesis activities. The system provides a centralized interface for tracking student progress, monitoring milestones, coordinating supervisors, and automating essential communication tasks.
+<header>
+<h1>MSc MLS Thesis Coordination Dashboard</h1>
+<p>MSc Medical Laboratory Science Program · College of Health Sciences · Gulf Medical University</p>
+</header>
 
-This dashboard supports the operational workflow of the **Thesis I and Thesis II courses**, enabling structured oversight of proposal development, milestone completion, and thesis supervision.
+<div class="container" id="dashboard">
 
----
+<div class="card">
+<h2>Upload Student CSV</h2>
+<p>Upload a CSV file containing the following columns:</p>
+<div class="notice">
+Reg No, Student Name, Student Email, Supervisor, Supervisor Email, Co-Supervisor
+</div>
 
-# Project Purpose
+<input type="file" id="csvUpload" accept=".csv">
+<button onclick="loadCSV()">Import Students</button>
+</div>
 
-Thesis coordination requires managing multiple students, supervisors, deadlines, and administrative processes simultaneously. This dashboard was developed to provide a structured coordination system that helps program leaders:
+<div class="card">
+<h2>Student Registry</h2>
 
-- monitor student research progress
-- track thesis milestones
-- manage supervisor assignments
-- automate communication with students and supervisors
-- generate program-level progress summaries
+<table id="studentTable">
+<thead>
+<tr>
+<th>Reg No</th>
+<th>Name</th>
+<th>Supervisor</th>
+<th>Portal</th>
+<th>Copy Link</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
 
-The goal is to **reduce administrative workload while improving visibility and coordination across the thesis process**.
+</div>
 
----
+<div id="studentPortal" class="portal" style="display:none"></div>
 
-# Key Features
+<script>
 
-## Student Tracking
+let students = JSON.parse(localStorage.getItem("students")) || [];
 
-Centralized registry of MSc MLS students including:
+function generateToken(){
+return Math.random().toString(36).substring(2,12);
+}
 
-- student name
-- registration number
-- student email
-- assigned supervisor
-- co-supervisor (if applicable)
-- current thesis stage
-- milestone completion status
+function loadCSV(){
 
----
+const file=document.getElementById("csvUpload").files[0];
+const reader=new FileReader();
 
-## Milestone Monitoring
+reader.onload=function(e){
 
-The dashboard tracks key stages of the thesis lifecycle:
+const rows=e.target.result.split("\n").slice(1);
 
-1. Proposal development
-2. Proposal presentation
-3. IRB / ethics approval
-4. Data collection
-5. Progress report submission
-6. Thesis writing
-7. Final defense
+students=rows.map(row=>{
 
-Milestones can be reviewed at both the **individual student level and cohort level**, helping coordinators identify delays early.
+const cols=row.split(",");
 
----
+const token=generateToken();
 
-## Supervisor Coordination
+return{
+regNo:cols[0]?.trim(),
+name:cols[1]?.trim(),
+email:cols[2]?.trim(),
+supervisor:cols[3]?.trim(),
+supervisorEmail:cols[4]?.trim(),
+cosupervisor:cols[5]?.trim(),
 
-The system allows monitoring of supervisor engagement and workload including:
+orcid:"",
 
-- number of students per supervisor
-- pending feedback
-- overdue milestone reviews
-- supervision distribution
+proposalReflection:"",
+progressReflection:"",
+defenseReflection:"",
 
-This helps maintain **equitable supervision allocation and timely feedback cycles**.
+status:"active",
 
----
 
-## Automated Communication
+token:token,
 
-The dashboard integrates automated email functionality allowing the coordinator to:
+link:`${window.location.origin}${window.location.pathname}?student=${cols[0]?.trim()}&token=${token}`
 
-- request ORCID information
-- request milestone reflections
-- send follow-up reminders
-- request supervisor progress updates
+};
 
-All communications are sent using the official program signature.
+});
 
----
+localStorage.setItem("students",JSON.stringify(students));
 
-## Reflection and Reporting
+renderStudents();
 
-Students submit structured reflections at key stages including:
+}
 
-- proposal presentation
-- progress reporting
-- thesis completion stages
+reader.readAsText(file);
 
-Supervisor feedback and student reflections can be summarized to generate program-level reports.
+}
 
----
+function renderStudents(){
 
-# System Architecture
+const table=document.querySelector("#studentTable tbody");
 
-The MSc MLS Thesis Coordination Dashboard is designed as a **lightweight web system deployable through GitHub Pages**, requiring no dedicated server infrastructure.
+if(!table) return;
 
-### Core Modules
 
-**Dashboard Interface**  
-Provides a real-time overview of:
 
-- active students
-- milestone completion
-- supervisor distribution
-- pending coordinator actions
 
-**Student Registry Module**  
-Stores core information for each student including identity, supervisor assignment, and thesis stage.
 
-**Milestone Tracking Engine**  
-Monitors completion of thesis stages and highlights overdue tasks.
 
-**Communication Automation Layer**  
-Uses predefined email templates to trigger program communications.
 
-**Reporting Module**  
-Generates cohort-level summaries including supervision load and milestone progress.
 
----
 
-# Data Structure
+table.innerHTML="";
 
-The dashboard is built around a structured dataset representing each MSc MLS student.
+students.forEach(s=>{
 
-Example data fields:
+if(!s.regNo) return;
 
-```
-Student Name
-Registration Number
-Student Email
-Supervisor Name
-Supervisor Email
-Co-Supervisor Name
-ORCID Status
-Thesis Stage
-Proposal Status
-IRB Status
-Progress Report Status
-Defense Status
-Reflection Submissions
-Supervisor Feedback
-```
+table.innerHTML+=`
 
----
+<tr>
+<td>${s.regNo}</td>
+<td>${s.name}</td>
+<td>${s.supervisor}</td>
+<td><a class="link" href="${s.link}" target="_blank">Open Portal</a></td>
+<td><button onclick="copyLink('${s.link}')">Copy</button></td>
+</tr>
 
-# Email Communication Signature
+`;
 
-Automated emails use the following standardized program identity:
+});
 
-**Dr. Salma Elnour Rahma**  
-Associate Professor of Microbiology, Thesis Coordinator  
-BSc, MSc, PhD (Microbiology), MPhil (Health Professions Education)
+}
 
-MSc Medical Laboratory Science Program  
-College of Health Sciences  
-Gulf Medical University
+function copyLink(link){
+navigator.clipboard.writeText(link);
+alert("Student portal link copied");
+}
 
----
+renderStudents();
 
-# Deployment Guide
+const params=new URLSearchParams(window.location.search);
 
-The dashboard is designed to be hosted using **GitHub Pages**.
+const studentID=params.get("student");
+const token=params.get("token");
 
-### Step 1 — Repository Setup
+if(studentID && token){
+loadStudentPortal(studentID,token);
+}
 
-Create a repository:
+function loadStudentPortal(regNo,token){
 
-```
-msc-mls-thesis-dashboard
-```
+const student=students.find(s=>s.regNo===regNo && s.token===token);
 
-Add project files:
+if(!student){
+document.body.innerHTML="<h2 style='padding:40px'>Invalid or expired link</h2>";
+return;
+}
 
-```
-index.html
-README.md
-assets/
-styles/
-scripts/
-```
 
----
 
-### Step 2 — Enable GitHub Pages
+document.getElementById("dashboard").style.display="none";
 
-Navigate to:
+const portal=document.getElementById("studentPortal");
 
-```
-Repository Settings → Pages
-```
+portal.style.display="block";
 
-Set source:
+portal.innerHTML=`
 
-```
-Deploy from branch → main
-```
+<h2>Hello ${student.name}</h2>
 
-GitHub will generate a public dashboard URL.
+<p><b>Reg No:</b> ${student.regNo}</p>
 
----
+<h3>Submit ORCID</h3>
 
-### Step 3 — Upload Dashboard
+<input id="orcid" placeholder="Enter ORCID ID">
 
-Upload the main dashboard interface as:
+<button onclick="submitORCID('${student.regNo}')">Submit ORCID</button>
 
-```
-index.html
-```
 
-Once deployed, the coordination dashboard becomes publicly accessible.
+<h3>Submit Reflection</h3>
 
----
+<select id="milestone">
+<option>Proposal Presentation</option>
+<option>Progress Report</option>
+<option>Defense Preparation</option>
+</select>
 
-# Optional Integrations
+<textarea id="reflection" placeholder="Write your reflection"></textarea>
 
-The system can be extended with:
+<button onclick="submitReflection('${student.regNo}')">Submit Reflection</button>
 
-**EmailJS** – send automated emails directly from the dashboard.
+`;
 
-**Google Forms** – collect reflections and supervisor reports.
+}
 
-**Google Apps Script** – synchronize responses from spreadsheets.
+function submitORCID(regNo){
 
----
+let students=JSON.parse(localStorage.getItem("students"));
 
-# Use Case
+const student=students.find(s=>s.regNo===regNo);
 
-This system was designed to support **postgraduate thesis coordination in health sciences programs**, particularly where multiple students and supervisors require structured monitoring.
+student.orcid=document.getElementById("orcid").value;
 
-Although developed for the **MSc Medical Laboratory Science Program**, the structure can be adapted to other postgraduate research programs.
+localStorage.setItem("students",JSON.stringify(students));
 
----
+alert("ORCID saved successfully");
 
-# License
+}
 
-This project is intended for **academic and educational coordination purposes**. Institutions are free to adapt and modify the system to suit their program needs.
+function submitReflection(regNo){
+
+const milestone=document.getElementById("milestone").value;
+
+const reflection=document.getElementById("reflection").value;
+
+let reflections=JSON.parse(localStorage.getItem("reflections")) || [];
+
+reflections.push({
+regNo:regNo,
+milestone:milestone,
+reflection:reflection,
+date:new Date()
+});
+
+localStorage.setItem("reflections",JSON.stringify(reflections));
+
+alert("Reflection submitted successfully");
+
+}
+
+</script>
+
+</body>
+</html>
